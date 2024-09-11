@@ -1,0 +1,59 @@
+variable,coefficient
+diabetes_No,0
+diabetes_Yes,1.434985
+insulin_No,0
+insulin_Yes,1.349343
+dia_pill_No,0
+dia_pill_Yes,.869673
+hypertension_No,0
+hypertension_Yes,1.32145
+hypertension_Don't_Know,1.549971
+hbp_pill_No,0
+hbp_pill_Yes,.941863
+smoke_No,0
+smoke_Yes,1.455294
+income_adjusted_<5000,0
+income_adjusted_5000-9999,1.097141
+income_adjusted_10000-14999,1.092827
+income_adjusted_15000-19999,1.132112
+income_adjusted_20000-24999,1.025482
+income_adjusted_25000-34999,.933795
+income_adjusted_35000-44999,.874679
+income_adjusted_45000-54999,.844637
+income_adjusted_55000-64999,.839515
+income_adjusted_65000-74999,.792347
+income_adjusted_>20000,1.056402
+income_adjusted_<20000,1.007313
+income_adjusted_14,.6899999999999999
+income_adjusted_15,.63
+Refused to answer,.844
+don't know,.9248
+gender_Female,0
+gender_Male,1.445895
+race_White,0
+race_Mexican_American,.5893350000000001
+race_Other_Hispanic,.558236
+race_Non-Hispanic_Black,.901114
+race_Other,.58939
+hs_Good,0
+hs_Excellent,.794749
+hs_Very_Good,.847261
+hs_Fair,1.250422
+hs_Poor,1.738524
+hs_Refused,0
+hs_8,0
+hs_don't know,1.425
+education_none,0
+education_k8,1.340056
+education_Some High_School,1.337783
+education_High_School_Equivalent,1.167788
+education_Associate,1.183262
+education_College or more,1.195394
+education_refused,3.3217
+age_c,1.077703
+bpxsar_c,1.004693
+bpxdar_c,.996766
+bmi_c,1.000008
+egfr_c,.997733
+uacr_c,1.000005
+ghb_c,1.000002
