@@ -1,3 +1,4 @@
+Variable,Type,id,coefficient
 age,2,age,0.055088001
 gender,1,genderMale,-0.04592295
 gender,1,genderFemale,-1.403952773
