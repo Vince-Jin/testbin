@@ -1,3 +1,5 @@
+let scenarioVector2 = []; // New vector to store age, gender, and race input
+
 function updateVariableInputs() {
     const variableInputsDiv = document.getElementById('variable-inputs');
     variableInputsDiv.innerHTML = ''; // Clear previous inputs
@@ -5,6 +7,7 @@ function updateVariableInputs() {
     if (currentModel === 'model1') {
         // Model 1: Categorical variables
         scenarioVector = [0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0]; // Reset scenarioVector for Model 1
+        scenarioVector2 = [0, 0, 1, 0, 1, 0, 0, 1]; // Initialize scenarioVector2 for Model 1
 
         variableInputsDiv.innerHTML = `
             <div>
@@ -58,20 +61,23 @@ function updateVariableInputs() {
             </div>
         `;
 
-        // Event listeners for categorical variables to update scenarioVector
+        // Event listeners for categorical variables to update scenarioVector and scenarioVector2
         document.getElementsByName('ageGroup').forEach((input, idx) => {
             input.addEventListener('change', () => {
                 updateScenarioVectorFromInput([0, 1, 2], idx);
+                updateScenarioVector2FromInput([0, 1, 2], idx); // Also update scenarioVector2
             });
         });
         document.getElementsByName('gender').forEach((input, idx) => {
             input.addEventListener('change', () => {
                 updateScenarioVectorFromInput([3, 4], idx);
+                updateScenarioVector2FromInput([3, 4], idx); // Also update scenarioVector2
             });
         });
         document.getElementsByName('raceEthnicity').forEach((input, idx) => {
             input.addEventListener('change', () => {
                 updateScenarioVectorFromInput([5, 6, 7], idx);
+                updateScenarioVector2FromInput([5, 6, 7], idx); // Also update scenarioVector2
             });
         });
         document.getElementsByName('selfRatedHealth').forEach((input, idx) => {
@@ -82,6 +88,7 @@ function updateVariableInputs() {
     } else if (currentModel === 'model2') {
         // Model 2: Continuous and Categorical variables
         scenarioVector = [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0]; // Reset scenarioVector for Model 2
+        scenarioVector2 = [60, 0, 1, 0, 0, 1]; // Initialize scenarioVector2 for Model 2
 
         variableInputsDiv.innerHTML = `
             <div>
@@ -139,7 +146,8 @@ function updateVariableInputs() {
 
         const updateAge = (value) => {
             let adjustedValue = parseFloat(value) - 60; // Decrease the input by 60
-            updateScenarioVectorFromInput([0], adjustedValue);
+            updateScenarioVectorFromInput([0], adjustedValue); // For scenarioVector
+            updateScenarioVector2FromInput([0], parseFloat(value)); // Direct value for scenarioVector2
         };
 
         ageInput.addEventListener('input', (e) => {
@@ -154,14 +162,19 @@ function updateVariableInputs() {
 
         document.getElementsByName('gender').forEach((input, idx) => {
             input.addEventListener('change', () => {
-                updateScenarioVectorFromInput([1, 2], idx);
+                updateScenarioVectorFromInput([1, 2], idx); // Update scenarioVector for gender
+                updateScenarioVector2FromInput([1, 2], idx); // Update scenarioVector2 for gender
             });
         });
+
         document.getElementsByName('raceEthnicity').forEach((input, idx) => {
             input.addEventListener('change', () => {
-                updateScenarioVectorFromInput([3, 4, 5, 6, 7], idx);
+                updateScenarioVectorFromInput([3, 4, 5, 6, 7], idx); // Update scenarioVector for race
+                // Update scenarioVector2: In Model 2, only the last three positions are relevant for race
+                updateScenarioVector2FromInput2([3, 4, 5, 6, 7], idx);
             });
         });
+
         document.getElementsByName('selfRatedHealth').forEach((input, idx) => {
             input.addEventListener('change', () => {
                 updateScenarioVectorFromInput([8, 9, 10, 11, 12], idx);
@@ -170,24 +183,77 @@ function updateVariableInputs() {
     }
 }
 
-// Update the scenario vector based on user input and display it
+// Update the scenario vector based on user input
 function updateScenarioVectorFromInput(indices, value) {
     indices.forEach((index, idx) => {
         if (indices.length === 1 && index === 0) {
             scenarioVector[index] = value; // For age, set the value directly
         } else {
-            scenarioVector[index] = idx === value ? 1 : 0;
+            scenarioVector[index] = idx === value ? 1 : 0; // For categorical variables
         }
     });
 
     // Log the updated scenario vector to the console for debugging
     console.log('Updated Scenario Vector (for debugging):', scenarioVector);
 
-    displayScenarioVector(); // Display the updated scenario vector in the UI
     calculateRisk(); // Trigger the risk calculation in riskCalculator.js
+}
+
+// Update the scenarioVector2 based on user input
+function updateScenarioVector2FromInput2(indices, value) {
+    indices.forEach((index, idx) => {
+        if (indices.length === 1 && index === 0) {
+            scenarioVector2[index] = value; // For age, set the value directly
+        } else if (indices.length === 3 && index >= 3 && index <= 5) {
+            // For race in Model 2, set one index to 1 and the others to 0
+            indices.forEach((raceIndex, raceIdx) => {
+                scenarioVector2[raceIndex] = (raceIdx === value) ? 1 : 0; // Set selected race to 1, others to 0
+            });
+        } else {
+            scenarioVector2[index] = idx === value ? 1 : 0; // For gender and other inputs
+        }
+    });
+
+    if (scenarioVector2[3] === 1 | scenarioVector2[4] === 1 | scenarioVector2[7] === 1) {
+        // If Non-Hispanic Black is selected, update the last index to 1
+        scenarioVector2[3] = 0;
+        scenarioVector2[4] = 1;
+        scenarioVector2[5] = 0;
+    } else if (scenarioVector2[6] === 1) {
+        // If Other is selected, update the last index to 1
+        scenarioVector2[3] = 1;
+        scenarioVector2[4] = 0;
+        scenarioVector2[5] = 0;
+    }  else if (scenarioVector2[5] === 1) {
+        // If Other is selected, update the last index to 1
+        scenarioVector2[3] = 0;
+        scenarioVector2[4] = 0;
+        scenarioVector2[5] = 1;
+    }
+
+    // Truncate the last two values of scenarioVector2
+    scenarioVector2 = scenarioVector2.slice(0, -2);
+
+    // Log the updated scenarioVector2 to the console for debugging
+    console.log('Updated Scenario Vector 2 (for debugging):', scenarioVector2);
+}
+
+// Update the scenarioVector2 based on user input
+function updateScenarioVector2FromInput(indices, value) {
+    indices.forEach((index, idx) => {
+        if (indices.length === 1 && index === 0) {
+            scenarioVector2[index] = value; // For age, set the value directly
+        } else {
+            scenarioVector2[index] = idx === value ? 1 : 0; // For gender and race
+        }
+    });
+
+    // Log the updated scenarioVector2 to the console for debugging
+    console.log('Updated Scenario Vector 2 (for debugging):', scenarioVector2);
 }
 
 // Initialize the form with default values for the selected model
 window.onload = function () {
-    updateVariableInputs();
+    updateVariableInputs(); // Ensure variables for the selected model are displayed
 };
+
