@@ -129,10 +129,10 @@ function calculateRisk() {
     console.log('Log Hazard Ratio 2 (logHR2):', logHR2);
 
     // Adjust f0 by the logHR to calculate the risk
-    const f0 = s0.map(s => (1 - s) * 100); // Convert survival probability to mortality risk
+    const f0 = s0.map(s => (1 - s)); // Convert survival probability to mortality risk
     const f1help = f0.map((f, index) => Math.min(f * Math.exp(logHR), 100)); // Apply logHR to adjust risk
     const f1 = f1help.map((f, index) => f * 10000); // Apply logHR to adjust risk
-    const f0_2 = s0_2.map(s => (1 - s) * 100); // Convert survival probability to mortality risk
+    const f0_2 = s0_2.map(s => (1 - s)); // Convert survival probability to mortality risk
     const f1help2 = f0_2.map((f, index) => Math.min(f * Math.exp(logHR2), 100)); // Apply logHR to adjust risk
     const f1_2 = f1help2.map((f, index) => f * 10000); // Apply logHR to adjust risk
 
@@ -170,11 +170,12 @@ function calculateRisk() {
         title: 'Mortality Risk Over Time',
         xaxis: {
             title: 'Time (days)',
-            showgrid: true
+            showgrid: true,
+            dtick: 10 // Set tick interval to every 10 units
         },
         yaxis: {
             title: 'Mortality Risk (per 10,000)',
-            range: [0, 5000],
+            range: [0, ],
             showgrid: true
         }
     };
