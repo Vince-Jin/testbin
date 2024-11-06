@@ -29,10 +29,10 @@ hyp_med,No,1,0b.hbp_pill,1,Hypertension Medication Intake
 hyp_med,Yes,1,1.hbp_pill,0,Hypertension Medication Intake
 smoke,No,1,0b.smoke,1,Smoking History
 smoke,Yes,1,1.smoke,0,Smoking History
-age,age,0,e_age_centered,0,Age
-bp_sys,bp_sys,0,bpxsar_new_centered,0,Systolic Blood Pressure
-bp_dia,bp_dia,0,bpxdar_new_centered,0,Diastolic Blood Pressure
-bmi,bmi,0,bmi_centered,0,BMI
+age,age,0,e_age_centered,60,Age
+bp_sys,bp_sys,0,bpxsar_new_centered,120,Systolic Blood Pressure
+bp_dia,bp_dia,0,bpxdar_new_centered,75,Diastolic Blood Pressure
+bmi,bmi,0,bmi_centered,24,BMI
 ghb,ghb,0,ghb,0,Glycohemoglobin
-eGFR,eGFR,0,egfr_centered,0,Estimated Glomerular Filtration Rate
-uACR,uACR,0,uacr_centered,0,Urine Albumin-to-Creatinine Ratio
+eGFR,eGFR,0,egfr_centered,90,Estimated Glomerular Filtration Rate
+uACR,uACR,0,uacr_centered,4,Urine Albumin-to-Creatinine Ratio
