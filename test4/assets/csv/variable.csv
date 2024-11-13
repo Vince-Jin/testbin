@@ -1,0 +1,23 @@
+variable,value_label,categorical,values,base,display_text
+gender,Male,1,0b.female,1,Gender
+gender,Female,1,1.female,0,Gender
+pre_hx_htn,No,1,0b.htn,1,History of Hypertension
+pre_hx_htn,Yes,1,1.htn,0,History of Hypertension
+hxsmk,No,1,0b.smoke,1,History of Smoking
+hxsmk,Yes,1,1.smoke,0,History of Smoking
+no_college,No,1,0b.not_college_bin,1,No College Education
+no_college,Yes,1,1.not_college_bin,0,No College Education
+insurance,No,1,0b.insurance_pre,1,Has Insurance
+insurance,Yes,1,1.insurance_pre,0,Has Insurance
+adi,No,1,0b.adi_bin,1,Area Deprivation Index Greater Than Median
+adi,Yes,1,1.adi_bin,0,Area Deprivation Index Greater Than Median
+race,Non-Hispanic White,1,0b.race_howell,1,Race/Ethnicity
+race,Hispanic (Any Race),1,1.race_howell,0,Race/Ethnicity
+race,Non-Hispanic Black,1,2.race_howell,0,Race/Ethnicity
+race,Non-Hispanic Other,1,3.race_howell,0,Race/Ethnicity
+age,Age,0,age,0,Age
+bmi,Body Mass Index,0,bmi,0,Body Mass Index
+sbp,Systolic Blood Pressure At Donation,0,sbp,0,Systolic Blood Pressure At Donation
+dbp,Diastolic Blood Pressure At Donation,0,dbp,0,Diastolic Blood Pressure At Donation
+egfr,Estimated Glomerular Filtration Rate At Donation,0,egfr_pre,0,Estimated Glomerular Filtration Rate At Donation
+income,Household Income,0,income,0,Household Income
