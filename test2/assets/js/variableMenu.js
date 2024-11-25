@@ -1,13 +1,13 @@
-let scenarioVector2 = []; // New vector to store age, gender, and race input
+let scenarioVector2_90day = []; // New vector to store age, gender, and race input
 
 function updateVariableInputs() {
     const variableInputsDiv = document.getElementById('variable-inputs');
     variableInputsDiv.innerHTML = ''; // Clear previous inputs
 
-    if (currentModel === 'model1') {
+    if (currentModel_90day === 'model1') {
         // Model 1: Categorical variables
         scenarioVector = [0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0]; // Reset scenarioVector for Model 1
-        scenarioVector2 = [0, 0, 1, 0, 1, 0, 0, 1]; // Initialize scenarioVector2 for Model 1
+        scenarioVector2_90day = [0, 0, 1, 0, 1, 0, 0, 1]; // Initialize scenarioVector2_90day for Model 1
 
         variableInputsDiv.innerHTML = `
             <div>
@@ -85,10 +85,10 @@ function updateVariableInputs() {
                 updateScenarioVectorFromInput([8, 9, 10, 11, 12], idx);
             });
         });
-    } else if (currentModel === 'model2') {
+    } else if (currentModel_90day === 'model2') {
         // Model 2: Continuous and Categorical variables
         scenarioVector = [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0]; // Reset scenarioVector for Model 2
-        scenarioVector2 = [60, 0, 1, 0, 0, 1]; // Initialize scenarioVector2 for Model 2
+        scenarioVector2_90day = [60, 0, 1, 0, 0, 1]; // Initialize scenarioVector2 for Model 2
 
         variableInputsDiv.innerHTML = `
             <div>
@@ -203,53 +203,53 @@ function updateScenarioVectorFromInput(indices, value) {
 function updateScenarioVector2FromInput2(indices, value) {
     indices.forEach((index, idx) => {
         if (indices.length === 1 && index === 0) {
-            scenarioVector2[index] = value; // For age, set the value directly
+            scenarioVector2_90day[index] = value; // For age, set the value directly
         } else if (indices.length === 3 && index >= 3 && index <= 5) {
             // For race in Model 2, set one index to 1 and the others to 0
             indices.forEach((raceIndex, raceIdx) => {
-                scenarioVector2[raceIndex] = (raceIdx === value) ? 1 : 0; // Set selected race to 1, others to 0
+                scenarioVector2_90day[raceIndex] = (raceIdx === value) ? 1 : 0; // Set selected race to 1, others to 0
             });
         } else {
-            scenarioVector2[index] = idx === value ? 1 : 0; // For gender and other inputs
+            scenarioVector2_90day[index] = idx === value ? 1 : 0; // For gender and other inputs
         }
     });
 
-    if (scenarioVector2[3] === 1 | scenarioVector2[4] === 1 | scenarioVector2[7] === 1) {
+    if (scenarioVector2_90day[3] === 1 | scenarioVector2_90day[4] === 1 | scenarioVector2_90day[7] === 1) {
         // If Non-Hispanic Black is selected, update the last index to 1
-        scenarioVector2[3] = 0;
-        scenarioVector2[4] = 1;
-        scenarioVector2[5] = 0;
-    } else if (scenarioVector2[6] === 1) {
+        scenarioVector2_90day[3] = 0;
+        scenarioVector2_90day[4] = 1;
+        scenarioVector2_90day[5] = 0;
+    } else if (scenarioVector2_90day[6] === 1) {
         // If Other is selected, update the last index to 1
-        scenarioVector2[3] = 1;
-        scenarioVector2[4] = 0;
-        scenarioVector2[5] = 0;
-    }  else if (scenarioVector2[5] === 1) {
+        scenarioVector2_90day[3] = 1;
+        scenarioVector2_90day[4] = 0;
+        scenarioVector2_90day[5] = 0;
+    }  else if (scenarioVector2_90day[5] === 1) {
         // If Other is selected, update the last index to 1
-        scenarioVector2[3] = 0;
-        scenarioVector2[4] = 0;
-        scenarioVector2[5] = 1;
+        scenarioVector2_90day[3] = 0;
+        scenarioVector2_90day[4] = 0;
+        scenarioVector2_90day[5] = 1;
     }
 
-    // Truncate the last two values of scenarioVector2
-    scenarioVector2 = scenarioVector2.slice(0, -2);
+    // Truncate the last two values of scenarioVector2_90day
+    scenarioVector2_90day = scenarioVector2_90day.slice(0, -2);
 
-    // Log the updated scenarioVector2 to the console for debugging
-    console.log('Updated Scenario Vector 2 (for debugging):', scenarioVector2);
+    // Log the updated scenarioVector2_90day to the console for debugging
+    console.log('Updated Scenario Vector 2 (for debugging):', scenarioVector2_90day);
 }
 
-// Update the scenarioVector2 based on user input
+// Update the scenarioVector2_90day based on user input
 function updateScenarioVector2FromInput(indices, value) {
     indices.forEach((index, idx) => {
         if (indices.length === 1 && index === 0) {
-            scenarioVector2[index] = value; // For age, set the value directly
+            scenarioVector2_90day[index] = value; // For age, set the value directly
         } else {
-            scenarioVector2[index] = idx === value ? 1 : 0; // For gender and race
+            scenarioVector2_90day[index] = idx === value ? 1 : 0; // For gender and race
         }
     });
 
-    // Log the updated scenarioVector2 to the console for debugging
-    console.log('Updated Scenario Vector 2 (for debugging):', scenarioVector2);
+    // Log the updated scenarioVector2_90day to the console for debugging
+    console.log('Updated Scenario Vector 2 (for debugging):', scenarioVector2_90day);
 }
 
 // Initialize the form with default values for the selected model
