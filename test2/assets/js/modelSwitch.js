@@ -1,3 +1,5 @@
+let currentModel = null;
+
 let currentModel = 'model1'; // Default to model 1
 
 // Function to toggle between models
