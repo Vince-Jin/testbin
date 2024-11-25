@@ -5,8 +5,6 @@ let s0_2_30year = []; // Second base survival function (s0_2)
 let timePoints_30year = []; // Time points for the survival function
 let timePoints2_30year = []; // Second set of time points for the survival function
 
-let currentModel_30year = 'model1'; // Default to model 1
-
 // Function to load model-specific data (model1 or model2) for beta coefficients
 async function loadModelData(modelName) {
     try {
