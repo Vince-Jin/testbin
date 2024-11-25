@@ -1,10 +1,3 @@
-betaCoefficients = null; // Array to store beta coefficients
-betaCoefficients2 = null; // Array to store the second set of beta coefficients
-s0 = null; // Base survival function (s0)
-s0_2 = null; // Second base survival function (s0_2)
-timePoints = null; // Time points for the survival function
-timePoints2 = null; // Second set of time points for the survival function
-
 let betaCoefficients = []; // Array to store beta coefficients
 let betaCoefficients2 = []; // Array to store the second set of beta coefficients
 let s0 = []; // Base survival function (s0)
