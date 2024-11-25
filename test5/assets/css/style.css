@@ -9,6 +9,7 @@ body {
   background-color: #f0f0f0;
 }
 
+
 /* Title styling */
 h1 {
   line-height: 1.2;
@@ -31,6 +32,12 @@ form, #riskOutput, #plotDiv {
   flex-wrap: wrap;
   gap: 10px;  /* Add space between radio buttons */
   justify-content: left;
+}
+
+/* Center the calculator selection radio groups */
+.calculator-selection {
+  justify-content: center;
+  text-align: center;
 }
 
 .radio-group input[type="radio"] {
@@ -122,5 +129,12 @@ button:hover {
 }
 
 #plotDiv {
+  margin-top: 20px;
+}
+
+/* Center the Load Calculator button */
+.button-container {
+  display: flex;
+  justify-content: center;
   margin-top: 20px;
 }
