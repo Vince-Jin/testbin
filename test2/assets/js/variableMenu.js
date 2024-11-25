@@ -1,4 +1,4 @@
-let scenarioVector2 = null;
+scenarioVector2 = null;
 
 let scenarioVector2 = []; // New vector to store age, gender, and race input
 
