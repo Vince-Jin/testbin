@@ -1,3 +1,13 @@
+let scenarioVectors = null; // Object to store scenario vectors for each variable
+let scenarioVectorHelper = null; // Helper vector to aggregate all scenario vectors for categorical variables
+let baseValues = null; // Object to store base values for continuous variables
+let scenarioVector = null; // Final scenario vector to be used in RiskCalculator.js
+
+let scenarioVectors2 = null; // Object to store scenario vectors for each variable for the second menu
+let scenarioVectorHelper2 = null; // Helper vector to aggregate all scenario vectors for categorical variables for the second menu
+let baseValues2 = null; // Object to store base values for continuous variables for the second menu
+let scenarioVector2 = null; 
+
 let scenarioVectors = {}; // Object to store scenario vectors for each variable
 let scenarioVectorHelper = []; // Helper vector to aggregate all scenario vectors for categorical variables
 let baseValues = {}; // Object to store base values for continuous variables
