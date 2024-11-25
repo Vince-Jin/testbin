@@ -1,4 +1,4 @@
-let currentModel = null;
+currentModel = null;
 
 let currentModel = 'model1'; // Default to model 1
 
