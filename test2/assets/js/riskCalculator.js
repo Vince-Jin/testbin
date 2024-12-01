@@ -120,37 +120,177 @@ async function loadSecondSurvivalData(modelName) {
     }
 }
 
+// Function to parse CSV files
+function parseCsv(url) {
+    return new Promise((resolve, reject) => {
+        Papa.parse(url, {
+            download: true,
+            header: true,
+            dynamicTyping: true,
+            complete: result => resolve(result.data),
+            error: err => reject(err)
+        });
+    });
+}
+
+// Function to reconstruct the covariance matrix from parsed CSV data
+function reconstructCovMatrix(data) {
+    const covMatrix = [];
+    const headers = Object.keys(data[0]).slice(1); // Get the headers excluding the first empty column
+
+    // Create a mapping of current order to desired order
+    const orderMap = {};
+    headers.forEach((header, index) => {
+        orderMap[header] = index;
+    });
+
+    // Reorganize the rows
+    headers.forEach(rowName => {
+        const rowIndex = orderMap[rowName];
+        const row = data[rowIndex];
+        const newRow = [];
+
+        // Reorganize the columns
+        headers.forEach(colName => {
+            newRow.push(row[colName]);
+        });
+
+        covMatrix.push(newRow);
+    });
+
+    return covMatrix;
+}
+
+// Function to calculate the mean of the linear combination
+function calculateMean(beta, c) {
+    return c.reduce((sum, ci, i) => sum + ci * beta[i], 0);
+}
+
+// Function to calculate the variance of the linear combination
+function calculateVariance(c, cov) {
+    let variance = 0;
+    for (let i = 0; i < c.length; i++) {
+        for (let j = 0; j < c.length; j++) {
+            variance += c[i] * c[j] * cov[i][j];
+        }
+    }
+    return variance;
+}
+
+// Function to calculate the confidence intervals
+function calculateConfidenceIntervals(beta, c, cov, confidenceLevel = 0.95) {
+    const zScore = 1.96; // Approx for 95% confidence level
+    const mean = calculateMean(beta, c);
+    const variance = calculateVariance(c, cov);
+    const standardError = Math.sqrt(variance);
+
+    const lower = mean - zScore * standardError;
+    const upper = mean + zScore * standardError;
+
+    return { mean, lower, upper };
+}
+
+// Function to load covariance matrix and calculate confidence intervals
+async function loadCovarianceMatrixAndCalculateCI(covUrl, betaCoefficients, scenarioVector) {
+    try {
+        // Parse the CSV file
+        const data = await parseCsv(covUrl);
+
+        // Reconstruct the covariance matrix
+        const covMatrix = reconstructCovMatrix(data);
+
+        // Log the beta matrix and c matrix
+        console.log('Beta Matrix:', betaCoefficients);
+        console.log('C Matrix (Scenario Vector):', scenarioVector);
+
+        // Calculate the confidence intervals
+        const confidenceIntervals = calculateConfidenceIntervals(betaCoefficients, scenarioVector, covMatrix);
+
+        // Log the variance (covariance) matrix
+        console.log('Variance (Covariance) Matrix:', covMatrix);
+
+        // Display the results
+        console.log(`Mean of the linear combination: ${confidenceIntervals.mean}`);
+        console.log(`95% Confidence Interval: [${confidenceIntervals.lower}, ${confidenceIntervals.upper}]`);
+
+        return confidenceIntervals;
+    } catch (error) {
+        console.error(`Error: ${error.message}`);
+    }
+}
+
 // Function to calculate risk using the scenario vector
-function calculateRisk() {
+async function calculateRisk() {
     // Calculate log hazard ratio (logHR) using the dot product of scenarioVector and betaCoefficients
     console.log('Beta Coefficients:', betaCoefficients_90day);
     console.log('Beta Coefficients 2:', betaCoefficients2_90day);
     console.log('senarioVector:', scenarioVector);
     console.log('senarioVector2:', scenarioVector2_90day);
     const logHR = scenarioVector.reduce((acc, value, index) => acc + value * betaCoefficients_90day[index], 0);
-    const logHR2 = scenarioVector2_90day.reduce((acc, value, index) => acc + value * betaCoefficients2_90day[index], 0);
+    const logHR2 = betaCoefficients2_90day.reduce((acc, value, index) => acc + value * scenarioVector2_90day[index], 0);
     console.log('Log Hazard Ratio (logHR):', logHR);
     console.log('Log Hazard Ratio 2 (logHR2):', logHR2);
+
+    const covUrl_m1 = currentModel_90day === 'model1' ? 'https://raw.githubusercontent.com/Vince-Jin/testbin/refs/heads/main/test2/assets/csv/var1.csv' : 'https://raw.githubusercontent.com/Vince-Jin/testbin/refs/heads/main/test2/assets/csv/var2.csv';
+    const covUrl_m2 = currentModel_90day === 'model1' ? 'https://raw.githubusercontent.com/Vince-Jin/testbin/refs/heads/main/test2/assets/csv/don_var1.csv' : 'https://raw.githubusercontent.com/Vince-Jin/testbin/refs/heads/main/test2/assets/csv/don_var2.csv';
+    const ci_m1 = await loadCovarianceMatrixAndCalculateCI(covUrl_m1, betaCoefficients_90day, scenarioVector);
+    const ci_m2 = await loadCovarianceMatrixAndCalculateCI(covUrl_m2, betaCoefficients2_90day, scenarioVector2_90day);
+    const ci_m1_lb = ci_m1.lower;
+    const ci_m2_lb = ci_m2.lower;
+    const ci_m1_ub = ci_m1.upper;
+    const ci_m2_ub = ci_m2.upper;
+
+    console.log('Log Hazard Ratio (logHR):', logHR);
+    console.log('Confidence Intervals Upper Bound(m1):', ci_m1_ub);
+    console.log('Confidence Intervals Lower Bound(m1):', ci_m1_lb);
+    console.log('Log Hazard Ratio 2 (logHR2):', logHR2);
+    console.log('Confidence Intervals Upper Bound(m2):', ci_m2_ub);
+    console.log('Confidence Intervals Lower Bound(m2):', ci_m2_lb);
 
     // Adjust f0 by the logHR to calculate the risk
     const f0 = s0_90day.map(s => (1 - s)); // Convert survival probability to mortality risk
     const f1help = f0.map((f, index) => Math.min(f * Math.exp(logHR), 100)); // Apply logHR to adjust risk
+    const f1help_lb = f0.map((f, index) => Math.max(Math.min(f * Math.exp(ci_m1_lb), 1), 0)); // Apply logHR to adjust risk
+    const f1help_ub = f0.map((f, index) => Math.max(Math.min(f * Math.exp(ci_m1_ub), 1), 0)); // Apply logHR to adjust risk
     const f1 = f1help.map((f, index) => f * 10000); // Apply logHR to adjust risk
+    const f1_lb = f1help_lb.map((f, index) => f * 10000); // Apply logHR to adjust risk
+    const f1_ub = f1help_ub.map((f, index) => f * 10000); // Apply logHR to adjust risk
+
     const f0_2 = s0_2_90day.map(s => (1 - s)); // Convert survival probability to mortality risk
     const f1help2 = f0_2.map((f, index) => Math.min(f * Math.exp(logHR2), 100)); // Apply logHR to adjust risk
+    const f1help2_lb = f0_2.map((f, index) => Math.max(Math.min(f * Math.exp(ci_m2_lb), 1), 0)); // Apply logHR to adjust risk
+    const f1help2_ub = f0_2.map((f, index) => Math.max(Math.min(f * Math.exp(ci_m2_ub), 1), 0)); // Apply logHR to adjust risk
     const f1_2 = f1help2.map((f, index) => f * 10000); // Apply logHR to adjust risk
+    const f1_lb_2 = f1help2_lb.map((f, index) => f * 10000); // Apply logHR to adjust risk
+    const f1_ub_2 = f1help2_ub.map((f, index) => f * 10000); // Apply logHR to adjust risk
 
     const sortedData = timePoints_90day.map((time, index) => ({ time, risk: f1[index] }))
         .sort((a, b) => a.time - b.time); // Sort by time
 
+    const sortedData_m1_lb = timePoints_90day.map((time, index) => ({ time, risk: f1_lb[index] }))
+        .sort((a, b) => a.time - b.time); // Sort by time
+    
+    const sortedData_m1_ub = timePoints_90day.map((time, index) => ({ time, risk: f1_ub[index] }))
+        .sort((a, b) => a.time - b.time); // Sort by time
+
     const sortedTimePoints = sortedData.map(item => item.time);
     const sortedF1 = sortedData.map(item => item.risk);
+    const sortedF1_lb = sortedData_m1_lb.map(item => item.risk);
+    const sortedF1_ub = sortedData_m1_ub.map(item => item.risk);
     
     const sortedData2 = timePoints2_90day.map((time, index) => ({ time, risk: f1_2[index] }))
         .sort((a, b) => a.time - b.time); // Sort by time
 
+    const sortedData_m2_lb = timePoints2_90day.map((time, index) => ({ time, risk: f1_lb_2[index] }))
+        .sort((a, b) => a.time - b.time); // Sort by time
+    
+    const sortedData_m2_ub = timePoints2_90day.map((time, index) => ({ time, risk: f1_ub_2[index] }))
+        .sort((a, b) => a.time - b.time); // Sort by time
+    
     const sortedTimePoints2 = sortedData2.map(item => item.time);
     const sortedF1_2 = sortedData2.map(item => item.risk);
+    const sortedF1_lb_2 = sortedData_m2_lb.map(item => item.risk);
+    const sortedF1_ub_2 = sortedData_m2_ub.map(item => item.risk);
 
     // Use Plotly.js to create the plot
     const data = [
@@ -162,11 +302,39 @@ function calculateRisk() {
             name: 'General Population Mortality Risk'
         },
         {
+            x: sortedTimePoints,
+            y: sortedF1_lb,
+            mode: 'lines',
+            line: { color: 'navy', dash: 'dash' },
+            name: 'Lower Bound of Mortality Risk'
+        },
+        {
+            x: sortedTimePoints,
+            y: sortedF1_ub,
+            mode: 'lines',
+            line: { color: 'navy', dash: 'dash' },
+            name: 'Upper Bound of Mortality Risk'
+        },
+        {
             x: sortedTimePoints2,
             y: sortedF1_2,
             mode: 'lines',
             line: { color: 'maroon' },
             name: 'Donor Mortality Risk'
+        },
+        {
+            x: sortedTimePoints2,
+            y: sortedF1_lb_2,
+            mode: 'lines',
+            line: { color: 'maroon', dash: 'dash' },
+            name: 'Lower Bound of Mortality Risk'
+        },
+        {
+            x: sortedTimePoints2,
+            y: sortedF1_ub_2,
+            mode: 'lines',
+            line: { color: 'maroon', dash: 'dash' },
+            name: 'Upper Bound of Mortality Risk'
         }
     ];
 
@@ -208,5 +376,6 @@ async function fetchCSV(filePath) {
 // Ensure that model data and survival data are loaded when the page loads
 window.onload = function () {
     const modelName = currentModel_90day === 'model1' ? 'model1' : 'model2'; // Ensure correct model name without .csv extension
+    updateVariableInputs(); // Update the variable inputs based on the selected model
     loadModelData(modelName); // Load model-specific data for beta coefficients
 };
