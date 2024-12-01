@@ -136,8 +136,107 @@ async function loadSecondSurvivalData(modelName) {
     }
 }
 
+// Function to parse CSV files
+function parseCsv(url) {
+    return new Promise((resolve, reject) => {
+        Papa.parse(url, {
+            download: true,
+            header: true,
+            dynamicTyping: true,
+            complete: result => resolve(result.data),
+            error: err => reject(err)
+        });
+    });
+}
+
+// Function to reconstruct the covariance matrix from parsed CSV data
+function reconstructCovMatrix(data) {
+    const covMatrix = [];
+    const headers = Object.keys(data[0]).slice(1); // Get the headers excluding the first empty column
+
+    // Create a mapping of current order to desired order
+    const orderMap = {};
+    headers.forEach((header, index) => {
+        orderMap[header] = index;
+    });
+
+    // Reorganize the rows
+    headers.forEach(rowName => {
+        const rowIndex = orderMap[rowName];
+        const row = data[rowIndex];
+        const newRow = [];
+
+        // Reorganize the columns
+        headers.forEach(colName => {
+            newRow.push(row[colName]);
+        });
+
+        covMatrix.push(newRow);
+    });
+
+    return covMatrix;
+}
+
+// Function to calculate the mean of the linear combination
+function calculateMean(beta, c) {
+    return c.reduce((sum, ci, i) => sum + ci * beta[i], 0);
+}
+
+// Function to calculate the variance of the linear combination
+function calculateVariance(c, cov) {
+    let variance = 0;
+    for (let i = 0; i < c.length; i++) {
+        for (let j = 0; j < c.length; j++) {
+            variance += c[i] * c[j] * cov[i][j];
+        }
+    }
+    return variance;
+}
+
+// Function to calculate the confidence intervals
+function calculateConfidenceIntervals(beta, c, cov, confidenceLevel = 0.95) {
+    const zScore = 1.96; // Approx for 95% confidence level
+    const mean = calculateMean(beta, c);
+    const variance = calculateVariance(c, cov);
+    const standardError = Math.sqrt(variance);
+
+    const lower = mean - zScore * standardError;
+    const upper = mean + zScore * standardError;
+
+    return { mean, lower, upper };
+}
+
+// Function to load covariance matrix and calculate confidence intervals
+async function loadCovarianceMatrixAndCalculateCI(covUrl, betaCoefficients, scenarioVector) {
+    try {
+        // Parse the CSV file
+        const data = await parseCsv(covUrl);
+
+        // Reconstruct the covariance matrix
+        const covMatrix = reconstructCovMatrix(data);
+
+        // Log the beta matrix and c matrix
+        console.log('Beta Matrix:', betaCoefficients);
+        console.log('C Matrix (Scenario Vector):', scenarioVector);
+
+        // Calculate the confidence intervals
+        const confidenceIntervals = calculateConfidenceIntervals(betaCoefficients, scenarioVector, covMatrix);
+
+        // Log the variance (covariance) matrix
+        console.log('Variance (Covariance) Matrix:', covMatrix);
+
+        // Display the results
+        console.log(`Mean of the linear combination: ${confidenceIntervals.mean}`);
+        console.log(`95% Confidence Interval: [${confidenceIntervals.lower}, ${confidenceIntervals.upper}]`);
+
+        return confidenceIntervals;
+    } catch (error) {
+        console.error(`Error: ${error.message}`);
+    }
+}
+
 // Function to calculate risk using the scenario vector
-function calculateRisk() {
+async function calculateRisk() {
     // Calculate log hazard ratio (logHR) using the dot product of scenarioVector and betaCoefficients
     console.log('Beta Coefficients:', betaCoefficients);
     console.log('Beta Coefficients 2:', betaCoefficients2);
@@ -145,24 +244,68 @@ function calculateRisk() {
     console.log('senarioVector2:', scenarioVector2);
     const logHR = scenarioVector.reduce((acc, value, index) => acc + value * betaCoefficients[index], 0);
     const logHR2 = scenarioVector2.reduce((acc, value, index) => acc + value * betaCoefficients2[index], 0);
+
+    // time to load the confidence intervals
+    // model1 - mortality
+    // model2 - esrd
+    // model1 - mort_var_overall.csv don_var1_overall.csv
+    // model2 - esrd_var_overall.csv don_var2_overall.csv
+    const covUrl_nhs = currentModel === 'model1' ? 'https://raw.githubusercontent.com/Vince-Jin/testbin/refs/heads/main/test3/assets/csv/mort_var_overall.csv' : 'https://raw.githubusercontent.com/Vince-Jin/testbin/refs/heads/main/test3/assets/csv/esrd_var_overall.csv';
+    const covUrl_don = currentModel === 'model1' ? 'https://raw.githubusercontent.com/Vince-Jin/testbin/refs/heads/main/test3/assets/csv/don_var1_overall.csv' : 'https://raw.githubusercontent.com/Vince-Jin/testbin/refs/heads/main/test3/assets/csv/don_var2_overall.csv';
+    const ci_nhs = await loadCovarianceMatrixAndCalculateCI(covUrl_nhs, betaCoefficients, scenarioVector);
+    const ci_don = await loadCovarianceMatrixAndCalculateCI(covUrl_don, betaCoefficients2, scenarioVector2);
+    const ci_nhs_lb = ci_nhs.lower;
+    const ci_nhs_ub = ci_nhs.upper;
+    const ci_don_lb = ci_don.lower;
+    const ci_don_ub = ci_don.upper;
+
     console.log('Log Hazard Ratio (logHR):', logHR);
+    console.log('Confidence Intervals Upper Bound(NHS):', ci_nhs_ub);
+    console.log('Confidence Intervals Lower Bound(NHS):', ci_nhs_lb);
     console.log('Log Hazard Ratio 2 (logHR2):', logHR2);
+    console.log('Confidence Intervals Upper Bound(Donor):', ci_don_ub);
+    console.log('Confidence Intervals Lower Bound(Donor):', ci_don_lb);
 
     // Adjust f0 by the logHR to calculate the risk
+    const modifier = currentModel === 'model1' ? 100 : 10000;
     const f0 = s0.map(s => (1 - s)); // Convert survival probability to mortality risk
-    const f1help = f0.map((f, index) => Math.min(f * Math.exp(logHR), 100)); // Apply logHR to adjust risk
+    const f1help = f0.map((f, index) => Math.min(f * Math.exp(logHR), 1)); // Apply logHR to adjust risk
+    const f1help_lb = f0.map((f, index) => Math.max(Math.min(f * Math.exp(ci_nhs_lb), 1), 0)); // Apply logHR to adjust risk
+    const f1help_ub = f0.map((f, index) => Math.max(Math.min(f * Math.exp(ci_nhs_ub), 1), 0)); // Apply logHR to adjust risk
     console.log('f1help:', f1help);
-    const f1 = f1help.map((f, index) => f * 10000); // Apply logHR to adjust risk
+    const f1 = f1help.map((f, index) => f * modifier); // Apply logHR to adjust risk
+    const f1_lb = f1help_lb.map((f, index) => f * modifier); // Apply logHR to adjust risk
+    const f1_ub = f1help_ub.map((f, index) => f * modifier); // Apply logHR to adjust risk
     console.log('f1:', f1);
     const f0_2 = s0_2.map(s => (1 - s)); // Convert survival probability to mortality risk
-    const f1help2 = f0_2.map((f, index) => Math.min(f * Math.exp(logHR2), 100)); // Apply logHR to adjust risk
-    const f1_2 = f1help2.map((f, index) => f * 10000); // Apply logHR to adjust risk
+    const f1help2 = f0_2.map((f, index) => Math.min(f * Math.exp(logHR2), 1)); // Apply logHR to adjust risk
+    const f1help_lb2 = f0_2.map((f, index) => Math.max(Math.min(f * Math.exp(ci_don_lb), 1), 0)); // Apply logHR to adjust risk
+    const f1help_ub2 = f0_2.map((f, index) => Math.max(Math.min(f * Math.exp(ci_don_ub), 1), 0)); // Apply logHR to adjust risk
+    const f1_2 = f1help2.map((f, index) => f * modifier); // Apply logHR to adjust risk
+    const f1_lb2 = f1help_lb2.map((f, index) => f * modifier); // Apply logHR to adjust risk
+    const f1_ub2 = f1help_ub2.map((f, index) => f * modifier); // Apply logHR to adjust risk
 
     const sortedData = timePoints.map((time, index) => ({ time, risk: f1[index] }))
         .sort((a, b) => a.time - b.time); // Sort by time
 
+    const sortedData_nhs_lb = timePoints.map((time, index) => ({ time, risk: f1_lb[index] }))
+        .sort((a, b) => a.time - b.time); // Sort by time
+
+    const sortedData_nhs_ub = timePoints.map((time, index) => ({ time, risk: f1_ub[index] }))
+        .sort((a, b) => a.time - b.time); // Sort by time
+
+    const sortedData_don_lb = timePoints2.map((time, index) => ({ time, risk: f1_lb2[index] }))
+        .sort((a, b) => a.time - b.time); // Sort by time
+
+    const sortedData_don_ub = timePoints2.map((time, index) => ({ time, risk: f1_ub2[index] }))
+        .sort((a, b) => a.time - b.time); // Sort by time
+
     const sortedTimePoints = sortedData.map(item => item.time);
     const sortedF1 = sortedData.map(item => item.risk);
+    const sortedF1_lb = sortedData_nhs_lb.map(item => item.risk);
+    const sortedF1_ub = sortedData_nhs_ub.map(item => item.risk);
+    const sortedF1_lb2 = sortedData_don_lb.map(item => item.risk);
+    const sortedF1_ub2 = sortedData_don_ub.map(item => item.risk);
     
     const sortedData2 = timePoints2.map((time, index) => ({ time, risk: f1_2[index] }))
         .sort((a, b) => a.time - b.time); // Sort by time
@@ -171,32 +314,62 @@ function calculateRisk() {
     const sortedF1_2 = sortedData2.map(item => item.risk);
 
     // Use Plotly.js to create the plot
+    const name1 = currentModel === 'model1' ? 'Mortality' : 'ESRD';
     const data = [
         {
             x: sortedTimePoints,
             y: sortedF1,
             mode: 'lines',
             line: { color: 'navy' },
-            name: 'General Population Mortality Risk'
+            name: 'General Population ' + name1 + ' Risk'
+        },
+        {
+            x: sortedTimePoints,
+            y: sortedF1_lb,
+            mode: 'lines',
+            line: { color: 'navy', dash: 'dash' },
+            name: 'Lower Bound of ' + 'General Population ' + name1 + ' Risk'
+        },
+        {
+            x: sortedTimePoints,
+            y: sortedF1_ub,
+            mode: 'lines',
+            line: { color: 'navy', dash: 'dash' },
+            name: 'Upper Bound of ' + 'General Population ' + name1 + ' Risk'
         },
         {
             x: sortedTimePoints2,
             y: sortedF1_2,
             mode: 'lines',
             line: { color: 'maroon' },
-            name: 'Donor Mortality Risk'
+            name: 'Donor ' + name1 + ' Risk'
+        },
+        {
+            x: sortedTimePoints2,
+            y: sortedF1_lb2,
+            mode: 'lines',
+            line: { color: 'maroon', dash: 'dash' },
+            name: 'Lower Bound of ' + 'Donor ' + name1 + ' Risk'
+        },
+        {
+            x: sortedTimePoints2,
+            y: sortedF1_ub2,
+            mode: 'lines',
+            line: { color: 'maroon', dash: 'dash' },
+            name: 'Upper Bound of ' + 'Donor ' + name1 + ' Risk'
         }
     ];
 
+    const subtitle_txt = currentModel === 'model1' ? 'Mortality Risk Over Time (%)' : 'ESRD Risk Over Time(per 10,000)';
     const layout = {
-        title: 'Mortality Risk Over Time',
+        title: subtitle_txt,
         xaxis: {
             title: 'Time (days)',
             showgrid: true,
             dtick: 10 // Set tick interval to every 10 units
         },
         yaxis: {
-            title: 'Mortality Risk (per 10,000)',
+            title: 'Risk',
             range: [0, ],
             showgrid: true
         }
