@@ -1,0 +1,9 @@
+variable,value_label,categorical,values,base,display_text
+age,Age,1,age,60,Age
+gender,Male,1,1.gender,0,Gender
+gender,Female,1,2b.gender,1,Gender
+race,Black,1,1.race2,0,Race
+race,Other or Multi-Racial,1,2.race2,0,Race
+race,White,1,3b.race2,1,Race
+p2014,No,1,1b.p2014,1,Post 2014 Period
+p2014,Yes,1,2.p2014,0,Post 2014 Period

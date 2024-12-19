@@ -1,0 +1,16 @@
+variable,value_label,categorical,values,base,display_text
+age,<= 40,1,e_age_centered,0,Age
+race,Mexican Amerian,1,1.race,0,Race
+race,Other Hispanic,1,2.race,1,Race
+race,Non-Hispanic White,1,3b.race,0,Race
+race,Non-Hispanic Black,1,4.race,1,Race
+race,Other,1,5.race,0,Race
+gender,Other or Multi-Racial,1,1.gender,0,Gender
+gender,White,1,2b.gender,1,Gender
+health,Excellent,1,1.hs,0,Self-Rated Health Status
+health,Very Good,1,2.hs,0,Self-Rated Health Status
+health,Good,1,3b.hs,1,Self-Rated Health Status
+health,Fair,1,4.hs,0,Self-Rated Health Status
+health,Poor,1,5.hs,0,Self-Rated Health Status
+p2014,No,1,1b.p2014,1,Post 2014 Period
+p2014,Yes,1,2.p2014,0,Post 2014 Period
