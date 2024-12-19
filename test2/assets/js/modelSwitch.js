@@ -22,6 +22,6 @@ window.onload = function () {
     modelSwitch.checked = false; // Default to Model 1 (unchecked state)
     
     currentModel_90day = 'model1'; // Set the default model
+    loadModelData(currentModel_90day); // Load beta coefficients for Model 1
     updateVariableInputs(); // Update inputs for Model 1
-    updateVariableInputs2(); // Update inputs for Model 2
 };
