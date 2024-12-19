@@ -1,5 +1,5 @@
 variable,value_label,categorical,values,base,display_text
-age,<= 40,1,e_age_centered,0,Age
+age,<= 40,0,e_age_centered,40,Age
 race,Mexican Amerian,1,1.race,0,Race
 race,Other Hispanic,1,2.race,1,Race
 race,Non-Hispanic White,1,3b.race,0,Race
